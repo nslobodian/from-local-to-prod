@@ -13,8 +13,8 @@ import { UsersModule } from './users/users.module';
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        username: configService.get('DB_USER'),
-        password: configService.get('DB_PASS'),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         host: configService.get('DB_HOST'),
         port: parseInt(configService.get('DB_PORT') || '5432'),

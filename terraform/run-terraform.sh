@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Load environment variables
-if [ -f .env.terraform ]; then
-    export $(cat .env.terraform | grep -v '^#' | xargs)
+if [ -f .env.terraform-script ]; then
+    export $(cat .env.terraform-script | grep -v '^#' | xargs)
 fi
 
 # Check if AWS credentials are set

@@ -25,6 +25,10 @@ echo "Creating application directory..."
 sudo mkdir -p /app
 sudo chown -R ubuntu:ubuntu /app
 
+# Configure git safe directory
+echo "Configuring git safe directory..."
+git config --global --add safe.directory /app
+
 # Clone repository
 echo "Cloning repository..."
 git clone ${repository_url} /app
@@ -37,12 +41,17 @@ npm install
 # Create .env file from template
 echo "Creating environment configuration..."
 cat > .env << EOL
-DB_USER=${db_username}
-DB_PASS=${db_password}
+# Database configuration for application
+DB_USERNAME=${db_app_username}
+DB_PASSWORD=${db_app_password}
 DB_HOST=${db_host}
 DB_PORT=5432
 DB_NAME=${db_name}
 NODE_ENV=production
+
+# Database configuration for migrations
+DB_MIGRATION_USERNAME=${db_migration_username}
+DB_MIGRATION_PASSWORD=${db_migration_password}
 EOL
 
 # Source environment variables
@@ -58,12 +67,12 @@ while ! nc -z ${db_host} 5432; do
 done
 echo "Database is ready!"
 
-# Run database migrations
+# Run database migrations using migration user
 echo "Running database migrations..."
-# First, try to create the database using Sequelize
-npx sequelize-cli db:create || true
-# Then run migrations
-npm run migration:run
+# First, try to create the database using Sequelize with migration user
+PGPASSWORD=${db_migration_password} npx sequelize-cli db:create --url "postgres://${db_migration_username}:${db_migration_password}@${db_host}:5432/${db_name}" || true
+# Then run migrations with migration user
+PGPASSWORD=${db_migration_password} npm run migration:run
 
 # Build application
 echo "Building application..."
@@ -99,7 +108,8 @@ npm install
 set -a
 source .env
 set +a
-npm run migration:run
+# Run migrations with migration user
+PGPASSWORD=${DB_MIGRATION_PASSWORD} npm run migration:run
 npm run build
 pm2 restart app
 EOL

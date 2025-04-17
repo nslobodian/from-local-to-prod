@@ -16,20 +16,55 @@ variable "repository_url" {
 }
 
 variable "db_name" {
-  description = "Name of the PostgreSQL database"
+  description = "Name of the database to create"
   type        = string
-  default     = "nestjs_sequelize"
+  default     = "nestjs_app_db"
 }
 
 variable "db_username" {
-  description = "Username for the PostgreSQL database"
+  description = "Master username for RDS instance"
   type        = string
   default     = "postgres"
 }
 
 variable "db_password" {
-  description = "Password for the PostgreSQL database"
+  description = "Master password for RDS instance"
   type        = string
   sensitive   = true
-  default     = "postgres"
+}
+
+variable "db_migration_username" {
+  description = "Username for database migrations"
+  type        = string
+  default     = "migration_user"
+}
+
+variable "db_migration_password" {
+  description = "Password for database migrations"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_app_username" {
+  description = "Username for application database access"
+  type        = string
+  default     = "app_user"
+}
+
+variable "db_app_password" {
+  description = "Password for application database access"
+  type        = string
+  sensitive   = true
+}
+
+variable "app_name" {
+  description = "Name of the application"
+  type        = string
+  default     = "app"
+}
+
+variable "ssh_key_path" {
+  description = "Path to the SSH public key file"
+  type        = string
+  default     = "~/.ssh/aws_key.pub"
 } 

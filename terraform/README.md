@@ -85,10 +85,10 @@ This Terraform configuration sets up a complete AWS infrastructure for running a
    Create and configure the Terraform environment file:
    ```bash
    cd terraform
-   cp .env.terraform.example .env.terraform
+   cp .env.terraform-script.example .env.terraform-script
    ```
    
-   Edit `.env.terraform` with your values:
+   Edit `.env.terraform-script` with your values:
    ```bash
    # AWS Credentials
    AWS_ACCESS_KEY_ID=your-access-key

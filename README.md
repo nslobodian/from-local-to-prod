@@ -40,8 +40,8 @@ This project uses Sequelize migrations to manage database schema changes. Here's
 Make sure your `.env` file contains the following database configuration:
 
 ```env
-DB_USER=postgres
-DB_PASS=postgres
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
 DB_NAME=your_database_name
 DB_HOST=localhost
 DB_PORT=5432
