@@ -109,7 +109,7 @@ set -a
 source .env
 set +a
 # Run migrations with migration user
-PGPASSWORD=${DB_MIGRATION_PASSWORD} npm run migration:run
+PGPASSWORD=${db_migration_password} npm run migration:run
 npm run build
 pm2 restart app
 EOL

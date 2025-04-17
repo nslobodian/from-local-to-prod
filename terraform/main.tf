@@ -172,6 +172,10 @@ resource "aws_instance" "app" {
                 db_username   = var.db_username
                 db_password   = var.db_password
                 db_name       = var.db_name
+                db_app_username = var.db_app_username
+                db_app_password = var.db_app_password
+                db_migration_username = var.db_migration_username
+                db_migration_password = var.db_migration_password
               })}
               EOS
               
