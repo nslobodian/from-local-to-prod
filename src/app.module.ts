@@ -20,8 +20,6 @@ import { UsersModule } from './users/users.module';
         port: parseInt(configService.get('DB_PORT') || '5432'),
         dialect: 'postgres',
         autoLoadModels: true,
-        // TODO: change into migration
-        synchronize: true,
       }),
       inject: [ConfigService],
     }),

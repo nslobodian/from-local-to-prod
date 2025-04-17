@@ -31,6 +31,112 @@
 $ npm install
 ```
 
+## Database Migrations
+
+This project uses Sequelize migrations to manage database schema changes. Here's how to work with migrations:
+
+### Prerequisites
+
+Make sure your `.env` file contains the following database configuration:
+
+```env
+DB_USER=postgres
+DB_PASS=postgres
+DB_NAME=your_database_name
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+### Available Commands
+
+```bash
+# Generate a new migration
+$ npm run migration:generate your-migration-name
+
+# Run all pending migrations
+$ npm run migration:run
+
+# Revert the last migration
+$ npm run migration:revert
+
+# Revert all migrations
+$ npm run migration:revert:all
+```
+
+### Creating a New Migration
+
+1. Generate a migration file:
+   ```bash
+   $ npm run migration:generate add-users-table
+   ```
+
+2. Edit the generated file in `src/migrations/` to define your schema changes:
+   ```javascript
+   module.exports = {
+     up: async (queryInterface, Sequelize) => {
+       await queryInterface.createTable('Users', {
+         id: {
+           allowNull: false,
+           autoIncrement: true,
+           primaryKey: true,
+           type: Sequelize.INTEGER
+         },
+         name: {
+           type: Sequelize.STRING,
+           allowNull: false
+         },
+         email: {
+           type: Sequelize.STRING,
+           allowNull: false,
+           unique: true
+         },
+         password: {
+           type: Sequelize.STRING,
+           allowNull: false
+         },
+         isActive: {
+           type: Sequelize.BOOLEAN,
+           defaultValue: true
+         },
+         createdAt: {
+           allowNull: false,
+           type: Sequelize.DATE
+         },
+         updatedAt: {
+           allowNull: false,
+           type: Sequelize.DATE
+         }
+       });
+     },
+
+     down: async (queryInterface, Sequelize) => {
+       await queryInterface.dropTable('Users');
+     }
+   };
+   ```
+
+3. Run the migration:
+   ```bash
+   $ npm run migration:run
+   ```
+
+### Migration Best Practices
+
+1. Always include a `down` method to revert changes
+2. Use meaningful migration names that describe the change
+3. Test migrations in a development environment before running in production
+4. Keep migrations small and focused on a single change
+5. Never modify a migration that has already been run in production
+
+### Troubleshooting
+
+If you encounter issues with migrations:
+
+1. Check your database connection settings in `.env`
+2. Ensure the database exists and is accessible
+3. Verify that previous migrations have been run successfully
+4. Check the Sequelize logs for detailed error messages
+
 ## Compile and run the project
 
 ```bash
