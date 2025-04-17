@@ -1,6 +1,9 @@
 import { Column, Model, Table, DataType } from 'sequelize-typescript';
 
-@Table
+@Table({
+  tableName: 'users',
+  timestamps: true,
+})
 export class User extends Model {
   @Column({
     type: DataType.INTEGER,
@@ -27,4 +30,16 @@ export class User extends Model {
     allowNull: false,
   })
   password: string;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+  })
+  createdAt: Date;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+  })
+  updatedAt: Date;
 }
