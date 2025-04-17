@@ -37,10 +37,10 @@ npm install
 # Create .env file from template
 echo "Creating environment configuration..."
 cat > .env << EOL
+DB_USER=${db_username}
+DB_PASS=${db_password}
 DB_HOST=${db_host}
 DB_PORT=5432
-DB_USER=${db_username}
-DB_PASSWORD=${db_password}
 DB_NAME=${db_name}
 NODE_ENV=production
 EOL

@@ -147,13 +147,29 @@ terraform [command]
    ssh -i $AWS_KEY_PATH ubuntu@<ec2-public-ip>
    ```
 
-2. **Check Application Status**
+2. **Check Setup Logs**
+   After deployment, check the setup logs to ensure everything was configured correctly:
+   ```bash
+   # Check cloud-init logs
+   sudo cat /var/log/cloud-init-output.log
+   
+   # Check application setup logs
+   sudo cat /var/log/app-setup.log
+   
+   # Check PM2 logs
+   pm2 logs
+   
+   # Check database initialization logs
+   sudo cat /var/log/db-init.log
+   ```
+
+3. **Check Application Status**
    ```bash
    pm2 list
    pm2 logs
    ```
 
-3. **Check Database Connection**
+4. **Check Database Connection**
    ```bash
    nc -zv <rds-endpoint> 5432
    ```
