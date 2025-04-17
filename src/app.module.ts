@@ -3,6 +3,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,10 +20,12 @@ import { AppService } from './app.service';
         port: parseInt(configService.get('DB_PORT') || '5432'),
         dialect: 'postgres',
         autoLoadModels: true,
+        // TODO: change into migration
         synchronize: true,
       }),
       inject: [ConfigService],
     }),
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
