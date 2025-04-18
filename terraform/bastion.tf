@@ -85,48 +85,53 @@ resource "aws_instance" "bastion" {
               BEGIN
                 -- Drop existing users if they exist
                 IF EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = '${var.db_migration_username}') THEN
-                  -- Drop all objects owned by migration user
                   DROP OWNED BY ${var.db_migration_username} CASCADE;
-                  
-                  -- Now drop the user
                   DROP USER ${var.db_migration_username};
                 END IF;
                 
                 IF EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = '${var.db_app_username}') THEN
-                  -- Drop all objects owned by app user
                   DROP OWNED BY ${var.db_app_username} CASCADE;
-                  
-                  -- Now drop the user
                   DROP USER ${var.db_app_username};
                 END IF;
                 
-                -- Create migration user
+                -- Create users
                 CREATE USER ${var.db_migration_username} WITH PASSWORD '${var.db_migration_password}' CREATEDB;
-                
-                -- Create app user
                 CREATE USER ${var.db_app_username} WITH PASSWORD '${var.db_app_password}';
               END
               $$;
 
-              -- Grant permissions to migration user
+              -- Grant base permissions
               GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_migration_username};
+              GRANT CREATE ON DATABASE ${var.db_name} TO ${var.db_migration_username};
+              GRANT CONNECT ON DATABASE ${var.db_name} TO ${var.db_app_username};
+              
+              -- Grant schema permissions
               GRANT ALL PRIVILEGES ON SCHEMA public TO ${var.db_migration_username};
+              GRANT USAGE, CREATE ON SCHEMA public TO ${var.db_app_username};
+              
+              -- Grant permissions on existing objects
               GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${var.db_migration_username};
               GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${var.db_migration_username};
               GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO ${var.db_migration_username};
-              GRANT CREATE ON DATABASE ${var.db_name} TO ${var.db_migration_username};
-              GRANT CREATE ON SCHEMA public TO ${var.db_migration_username};
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${var.db_migration_username};
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${var.db_migration_username};
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO ${var.db_migration_username};
-
-              -- Grant permissions to app user
-              GRANT CONNECT ON DATABASE ${var.db_name} TO ${var.db_app_username};
-              GRANT USAGE ON SCHEMA public TO ${var.db_app_username};
+              
               GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${var.db_app_username};
               GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ${var.db_app_username};
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${var.db_app_username};
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO ${var.db_app_username};
+
+              -- Set up default privileges for both users
+              SET ROLE ${var.db_migration_username};
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+                GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${var.db_app_username};
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+                GRANT USAGE, SELECT ON SEQUENCES TO ${var.db_app_username};
+              
+              SET ROLE ${var.db_app_username};
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+                GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${var.db_migration_username};
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public 
+                GRANT USAGE, SELECT ON SEQUENCES TO ${var.db_migration_username};
+              
+              RESET ROLE;
+
               SQL
 
               echo "Database setup completed successfully!"
