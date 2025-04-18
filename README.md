@@ -31,6 +31,81 @@
 $ npm install
 ```
 
+## Docker Compose Setup
+
+This project includes a Docker Compose configuration for running the PostgreSQL database. Here's how to use it:
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) installed on your system
+- [Docker Compose](https://docs.docker.com/compose/install/) installed on your system
+
+### Running the Database
+
+1. Start the PostgreSQL container:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. Check if the container is running:
+   ```bash
+   docker-compose ps
+   ```
+
+3. To stop the container:
+   ```bash
+   docker-compose down
+   ```
+
+4. To stop and remove all data (including the database volume):
+   ```bash
+   docker-compose down -v
+   ```
+
+### Configuration
+
+The Docker Compose file (`docker-compose.yml`) includes the following configuration:
+
+- PostgreSQL 16 (Alpine version)
+- Port mapping: 5432 (host) -> 5432 (container)
+- Default credentials:
+  - Username: postgres
+  - Password: postgres
+  - Database: nestjs_sequelize
+- Persistent volume for database data
+- Health check configuration
+
+### Environment Variables
+
+Make sure your `.env` file matches the Docker Compose configuration:
+
+```env
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=nestjs_sequelize
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. Check if the container is running:
+   ```bash
+   docker-compose ps
+   ```
+
+2. View container logs:
+   ```bash
+   docker-compose logs postgres
+   ```
+
+3. Check database connectivity:
+   ```bash
+   docker-compose exec postgres psql -U postgres -d nestjs_sequelize
+   ```
+
 ## Database Migrations
 
 This project uses Sequelize migrations to manage database schema changes. Here's how to work with migrations:
