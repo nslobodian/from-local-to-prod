@@ -16,6 +16,9 @@ resource "aws_instance" "app" {
   # Force instance recreation when user_data changes
   user_data_replace_on_change = true
 
+  # Wait for bastion to be fully provisioned and database users created
+  depends_on = [aws_instance.bastion]
+
   # Free tier: 30GB of EBS storage
   root_block_device {
     volume_size = 8  # Using 8GB to stay well within free tier
