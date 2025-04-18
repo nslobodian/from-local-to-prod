@@ -1,4 +1,8 @@
 # Security Group for Bastion Host
+locals {
+  rds_endpoint = replace(aws_db_instance.postgres.endpoint, ":5432", "")
+}
+
 resource "aws_security_group" "bastion" {
   name        = "${var.app_name}-bastion-sg"
   description = "Security group for bastion host"
@@ -58,24 +62,65 @@ resource "aws_instance" "bastion" {
               cat > /home/ubuntu/setup_db_users.sh << 'EOS'
               #!/bin/bash
               set -e
+              exec > >(tee /var/log/db-setup.log) 2>&1
+
+              echo "Starting database setup..."
 
               # Wait for RDS to be ready
-              while ! nc -z ${aws_db_instance.postgres.endpoint} 5432; do
+              echo "Waiting for RDS to be ready..."
+              while ! nc -z ${local.rds_endpoint} 5432; do
                 sleep 1
               done
+              echo "RDS is ready!"
+
+              # Create database if it doesn't exist
+              echo "Checking if database exists..."
+              PGPASSWORD=${var.db_password} psql -h ${local.rds_endpoint} -U ${var.db_username} -d postgres -c "SELECT 1 FROM pg_database WHERE datname = '${var.db_name}'" | grep -q 1 || \
+                PGPASSWORD=${var.db_password} psql -h ${local.rds_endpoint} -U ${var.db_username} -d postgres -c "CREATE DATABASE ${var.db_name}"
 
               # Create users and set permissions
-              PGPASSWORD=${var.db_password} psql -h ${aws_db_instance.postgres.endpoint} -U ${var.db_username} -d ${var.db_name} << 'SQL'
-              -- Create migration user
-              CREATE USER ${var.db_migration_username} WITH PASSWORD '${var.db_migration_password}';
+              echo "Setting up users and permissions..."
+              PGPASSWORD=${var.db_password} psql -h ${local.rds_endpoint} -U ${var.db_username} -d ${var.db_name} << 'SQL'
+              DO $$
+              BEGIN
+                -- Drop existing users if they exist
+                IF EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = '${var.db_migration_username}') THEN
+                  -- Drop all objects owned by migration user
+                  DROP OWNED BY ${var.db_migration_username} CASCADE;
+                  
+                  -- Now drop the user
+                  DROP USER ${var.db_migration_username};
+                END IF;
+                
+                IF EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = '${var.db_app_username}') THEN
+                  -- Drop all objects owned by app user
+                  DROP OWNED BY ${var.db_app_username} CASCADE;
+                  
+                  -- Now drop the user
+                  DROP USER ${var.db_app_username};
+                END IF;
+                
+                -- Create migration user
+                CREATE USER ${var.db_migration_username} WITH PASSWORD '${var.db_migration_password}' CREATEDB;
+                
+                -- Create app user
+                CREATE USER ${var.db_app_username} WITH PASSWORD '${var.db_app_password}';
+              END
+              $$;
+
+              -- Grant permissions to migration user
               GRANT ALL PRIVILEGES ON DATABASE ${var.db_name} TO ${var.db_migration_username};
+              GRANT ALL PRIVILEGES ON SCHEMA public TO ${var.db_migration_username};
               GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${var.db_migration_username};
               GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${var.db_migration_username};
+              GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO ${var.db_migration_username};
+              GRANT CREATE ON DATABASE ${var.db_name} TO ${var.db_migration_username};
+              GRANT CREATE ON SCHEMA public TO ${var.db_migration_username};
               ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${var.db_migration_username};
               ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${var.db_migration_username};
+              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO ${var.db_migration_username};
 
-              -- Create app user
-              CREATE USER ${var.db_app_username} WITH PASSWORD '${var.db_app_password}';
+              -- Grant permissions to app user
               GRANT CONNECT ON DATABASE ${var.db_name} TO ${var.db_app_username};
               GRANT USAGE ON SCHEMA public TO ${var.db_app_username};
               GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${var.db_app_username};
@@ -83,6 +128,8 @@ resource "aws_instance" "bastion" {
               ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${var.db_app_username};
               ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO ${var.db_app_username};
               SQL
+
+              echo "Database setup completed successfully!"
               EOS
 
               # Make script executable
