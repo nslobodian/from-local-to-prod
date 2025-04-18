@@ -69,10 +69,8 @@ echo "Database is ready!"
 
 # Run database migrations using migration user
 echo "Running database migrations..."
-# First, try to create the database using Sequelize with migration user
-PGPASSWORD=${db_migration_password} npx sequelize-cli db:create --url "postgres://${db_migration_username}:${db_migration_password}@${db_host}:5432/${db_name}" || true
 # Then run migrations with migration user
-PGPASSWORD=${db_migration_password} npm run migration:run
+PGPASSWORD=${db_migration_password} npx sequelize-cli db:migrate --url "postgres://${db_migration_username}:${db_migration_password}@${db_host}:5432/${db_name}"
 
 # Build application
 echo "Building application..."
@@ -109,7 +107,7 @@ set -a
 source .env
 set +a
 # Run migrations with migration user
-PGPASSWORD=${db_migration_password} npm run migration:run
+PGPASSWORD=${db_migration_password} npx sequelize-cli db:migrate --url "postgres://${db_migration_username}:${db_migration_password}@${db_host}:5432/${db_name}"
 npm run build
 pm2 restart app
 EOL
